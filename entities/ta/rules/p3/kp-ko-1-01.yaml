@@ -9,10 +9,17 @@ rules:
       correction: >
         Разделить мастер и воркер ноды. Обеспечить количество мастер нод не менее 3 штук. Воркер нод не менее 2.
       title: TACIR_1-КП-КО-1-01
+      origin:
+        main: "($)"
+        app_tree: seaf.ta.app_tree
       source: >
-        (
-          $metal := $."seaf.ta.services.k8s";
+        (       
+          $CONTEXT := $;  
+          $metal := $CONTEXT.main."seaf.ta.services.k8s"; 
+        
           [$metal.$spread().(
+            $criticality := $eval($CONTEXT.main.functions."seaf.ta".find_criticality, [{"v":$keys(),"c":$CONTEXT.app_tree}, $]);
+            $log("-*-++-> "&  $keys() & "   " & $criticality,["MTG"]); /*Вот тут видно в дебагере по слову MTG какая критичность у рассматриваемых сущностей. Необходимо добавить условие обработки критичности и завязать выполнение проверки на него/*
             $master_qty := $[$not($exists(*.master_qty)) or *.master_qty < 3 or $not($exists(*.worker_qty)) or *.worker_qty < 2  ].$keys();
             $master_qty.{
               "uid": "sber.standards.v3.p3." & $self.uid & "." & "\"" & $ & "\"",
