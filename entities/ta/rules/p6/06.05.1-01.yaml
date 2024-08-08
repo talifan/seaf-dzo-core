@@ -11,7 +11,7 @@ rules:
         (
           $metal := $."seaf.ta.services.monitoring";
           [$metal.$spread().(
-            $pam_anabled := $[$not($exists(*.sber.pam_anabled)) or $not (*.sber.pam_anabled)].$keys();
+            $pam_anabled := $[$not($exists(*.sber.pam_enabled)) or $not (*.sber.pam_enabled)].$keys();
             $pam_anabled.{
               "uid": "sber.standards.v3.p6." & $self.uid & "." & "\"" & $ & "\"",
               "title": $self.title & " " & $,

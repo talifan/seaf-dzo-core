@@ -11,7 +11,7 @@ rules:
         (
           $metal := $."seaf.ta.components.network";
           [$metal.$spread().(
-            $auth_type := $[$not($exists(*.auth_type)) or *.auth_type = 'Отсутствует'].$keys();
+            $auth_type := $[$not($exists(*.sber.auth_type)) or *.sber.auth_type = 'Отсутствует'].$keys();
             $auth_type.{
               "uid": "sber.standards.v3.p6." & $self.uid & "." & "\"" & $ & "\"",
               "title": $self.title & " " & $,
