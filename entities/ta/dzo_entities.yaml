@@ -30,9 +30,6 @@ entities:
             pv:
               title: Persistent Volume используются в кластере K8s
               type: boolean
-            virtual_cluster_id:
-              title: Связь K8s кластера с кластером виртуализации
-              type: string
             class:
               title: Класс систем
               enum:
@@ -64,6 +61,87 @@ entities:
             sber:
               $ref: "#/$defs/seaf.ta.services.k8s_dzo"
 
+  seaf.ta.components.k8s_namespace:
+    title: K8s Namespace
+    objects:
+      k8s_namespace:
+        route: "/"
+        title: K8s Namespace
+    schema:
+      type: object
+      patternProperties:
+        "[a-zA-Z0-9_\\.]*":
+          type: object
+          $ref: "#/$defs/seaf.ta.components.base.entity"
+          properties:
+            namespace_id:
+              title: K8s Namespace ID
+              type: string
+            k8s_cluster_id:
+              title: Ссылка на кластер
+              $ref: "#/$rels/seaf.ta.services.k8s.k8s"
+            labels:
+              title: Список labels
+              type: array
+
+  seaf.ta.components.k8s_pv:
+    title: K8s Persistent Volume
+    objects:
+      k8s_pv:
+        route: "/"
+        title: K8s Persistent Volume
+    schema:
+      type: object
+      patternProperties:
+        "[a-zA-Z0-9_\\.]*":
+          type: object
+          $ref: "#/$defs/seaf.ta.components.base.entity"
+          properties:
+            id:
+              title: K8s Persistent Volume ID
+              type: string
+            capacity:
+              title: PV Capacity (MB)
+              type: integer
+            volumemode:
+              title: PV Volume Mode
+              type: string
+            hostpath:
+              title: PV Host Path
+              type: string
+            k8s_cluster_id:
+              title: Ссылка на кластер
+              $ref: "#/$rels/seaf.ta.services.k8s.k8s"
+
+  seaf.ta.components.k8s_pvc:
+    title: K8s Persistent Volume Claim
+    objects:
+      k8s_pvc:
+        route: "/"
+        title: K8s Persistent Volume
+    schema:
+      type: object
+      patternProperties:
+        "[a-zA-Z0-9_\\.]*":
+          type: object
+          $ref: "#/$defs/seaf.ta.components.base.entity"
+          properties:
+            id:
+              title: K8s Persistent Volume Claim ID
+              type: string
+            namespace_id:
+              title: Ссылка на Namespace
+              $ref: "#/$rels/seaf.ta.components.k8s_namespace.k8s_namespace"
+            pv_id:
+              title: Ссылка на Persistent Volume
+              $ref: "#/$rels/seaf.ta.components.k8s_pv.k8s_pv"
+            capacity:
+              title: PVC Capacity (MB)
+              type: integer
+            volumemode:
+              title: PVC Volume Mode
+              type: string
+
   seaf.ta.components.k8s_deployment:
     title: K8s Deployment
     objects:
@@ -77,9 +155,14 @@ entities:
           type: object
           $ref: "#/$defs/seaf.ta.components.base.entity"
           properties:
-            deployment_id:
+            id:
               title: K8s Deployment ID
               type: string
+            volumes:
+              title: Список volume
+              type: array
+              items:
+                $ref: "#/$rels/seaf.ta.components.k8s_pv.k8s_pv"
             update_strategy:
               title: Стратегия обновления
               type: string
@@ -98,22 +181,54 @@ entities:
               type: array
               items:
                 $ref: "#/$rels/seaf.ta.services.k8s.k8s"
-            k8s_pod:
-              title: Pod IDs
-              $ref: "#/$rels/seaf.ta.components.k8s_pod.k8s_pod"
+            container_id: #todo тут в реверсе ссылка на контейнеры, а не поды. Исправить и согласовать
+              title: Container IDs
+              $ref: "#/$rels/seaf.ta.components.k8s_container.k8s_container"
             availabilityzone_id:
               title: В какие зоны развёрнут Deployment
               type: array
               items:
                 $ref: "#/$rels/seaf.ta.services.dc_az.dc_az"
+            pv_id:
+              title: Ссылка на Persistent Volume
+              $ref: "#/$rels/seaf.ta.components.k8s_pv.k8s_pv"
+            namespace_id:
+              title: Ссылка на Namespace
+              $ref: "#/$rels/seaf.ta.components.k8s_namespace.k8s_namespace"
+            labels:
+              title: Список labels
+              type: array
           required:
-            - deployment_id
-            - update_strategy
-            - hpa
-            - replicas
-            - maxunavailable
-            - kubernetes_id
-            - availabilityzone_id
+            - id
+
+  seaf.ta.components.service:
+    title: K8s Service
+    objects:
+      k8s_service:
+        route: "/"
+        title: K8s Service
+    schema: # JSON Schema контролирующая описание объекта сущности
+      type: object
+      patternProperties:
+        "[a-zA-Z0-9_\\.]*":
+          type: object
+          $ref: "#/$defs/seaf.ta.components.base.entity"
+          properties:
+            id:
+              title: K8s Service ID
+              type: string
+          labels:
+            title: Список labels
+            type: array
+          ports:
+            title: Список ports
+            type: array
+          selector:
+            title: Список селекторов
+            type: array
+          namespace_id:
+            title: Ссылка на Namespace
+            $ref: "#/$rels/seaf.ta.components.k8s_namespace.k8s_namespace"
 
   seaf.ta.components.k8s_statefulset:
     title: K8s StatefulSet
