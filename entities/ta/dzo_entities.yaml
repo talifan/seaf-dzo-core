@@ -74,7 +74,7 @@ entities:
           type: object
           $ref: "#/$defs/seaf.ta.components.base.entity"
           properties:
-            namespace_id:
+            id:
               title: K8s Namespace ID
               type: string
             k8s_cluster_id:
@@ -103,10 +103,10 @@ entities:
             capacity:
               title: PV Capacity (MB)
               type: integer
-            volumemode:
+            volume_mode:
               title: PV Volume Mode
               type: string
-            hostpath:
+            host_path:
               title: PV Host Path
               type: string
             k8s_cluster_id:
@@ -138,7 +138,7 @@ entities:
             capacity:
               title: PVC Capacity (MB)
               type: integer
-            volumemode:
+            volume_mode:
               title: PVC Volume Mode
               type: string
 
@@ -201,7 +201,7 @@ entities:
           required:
             - id
 
-  seaf.ta.components.service:
+  seaf.ta.components.k8s_service:
     title: K8s Service
     objects:
       k8s_service:
@@ -217,18 +217,18 @@ entities:
             id:
               title: K8s Service ID
               type: string
-          labels:
-            title: Список labels
-            type: array
-          ports:
-            title: Список ports
-            type: array
-          selector:
-            title: Список селекторов
-            type: array
-          namespace_id:
-            title: Ссылка на Namespace
-            $ref: "#/$rels/seaf.ta.components.k8s_namespace.k8s_namespace"
+            labels:
+              title: Список labels
+              type: array
+            ports:
+              title: Список ports
+              type: array
+            selector:
+              title: Список селекторов
+              type: array
+            namespace_id:
+              title: Ссылка на Namespace
+              $ref: "#/$rels/seaf.ta.components.k8s_namespace.k8s_namespace"
 
   seaf.ta.components.k8s_statefulset:
     title: K8s StatefulSet
@@ -243,7 +243,7 @@ entities:
           type: object
           $ref: "#/$defs/seaf.ta.components.base.entity"
           properties:
-            statefulset_id:
+            id:
               title: K8s StatefulSet ID
               type: string
             name:
@@ -442,7 +442,7 @@ entities:
           type: object
           $ref: "#/$defs/seaf.ta.components.base.entity"
           properties:
-            image_id:
+            id:
               title: Image K8s ID
               type: string
             name:
