@@ -158,7 +158,7 @@ entities:
     objects:
       k8s_pvc:
         route: "/"
-        title: K8s Persistent Volume
+        title: K8s Persistent Volume ID
     schema:
       type: object
       patternProperties:
@@ -198,11 +198,9 @@ entities:
             id:
               title: K8s Deployment ID
               type: string
-            volumes:
-              title: Список volume
-              type: array
-              items:
-                $ref: "#/$rels/seaf.ta.components.k8s_pv.k8s_pv"
+              #items:
+              #  $ref: "#/$rels/seaf.ta.components.k8s_pv.k8s_pv"
+              # это явная ошибка - это поле для томов деплоймента, а не PV
             update_strategy:
               title: Стратегия обновления
               type: string
@@ -213,33 +211,133 @@ entities:
             replicas:
               title: Количество реплик
               type: integer
-            maxunavailable:
+            maxunavailable: #todo это поле имеет смысл только, если update strategy - rolling update, подумать, как оформить на будущее
               title: Какое минимальное количество экземпляров должно работать во время обновления обслуживающих текущие запросы
               type: integer
-            kubernetes_id:
+            k8s_cluster_id: # кластер у деплоймента всегда один
               title: Kubernetes cluster ID
+              $ref: "#/$rels/seaf.ta.services.k8s.k8s"
+              #todo надо решить, нужна ли тут ссылка на кластер, ибо связь идёт через namespace
+            #container_id: # решили пока использовать в виде template в рамках сущности deployment
+            #  title: Container IDs
+            #  $ref: "#/$rels/seaf.ta.components.k8s_container.k8s_container"
+            containers:
+              title: список шаблонов контейнеров деплоймента
               type: array
               items:
-                $ref: "#/$rels/seaf.ta.services.k8s.k8s"
-            container_id: #todo тут в реверсе ссылка на контейнеры, а не поды. Исправить и согласовать
-              title: Container IDs
-              $ref: "#/$rels/seaf.ta.components.k8s_container.k8s_container"
-            availabilityzone_id:
-              title: В какие зоны развёрнут Deployment
+                type: object
+                properties:
+                  name:
+                    title: название контейнера
+                    type: string
+                  image:
+                    title: имя образа внутри контейнера
+                    type: string
+                  image_pull_policy:
+                    title: политика получения образов при запуске контейнера
+                    type: string
+                    enum: [Always, IfNotPresent, Never]
+                  termination_grace_period_seconds:
+                    title: время до физического завершения процесса
+                    type: integer
+                  ports:
+                    title: порты контейнера
+                    type: object
+                    properties:
+                      name:
+                        title: наименование порта
+                        type: string
+                      port:
+                        title: цифровое значение порта
+                        type: integer
+                      protocol:
+                        title: протокол, по которому осуществляется взаимодействие с портом
+                        type: string
+                  liveness_probe:
+                    title: пробник живости контейнера
+                    type: object
+                    properties:
+                      path:
+                        title: URI пробника
+                        type: string
+                      port:
+                        title: порт пробника
+                        type:
+                          - string # потому что может быть именем порта из спецификации контейнера
+                          - integer
+                      failure_threshold: # есть только такой параметр
+                        title: количество попыток до признания контейнера неживым
+                        type: integer
+                        default: 3
+                  readiness_probe:
+                    title: пробник готовности контейнера
+                    type: object
+                    properties:
+                      path:
+                        title: URI пробника
+                        type: string
+                      port:
+                        title: порт пробника
+                        type:
+                          - string # потому что может быть именем порта из спецификации контейнера
+                          - integer
+                      failure_threshold: # есть только такой параметр
+                        title: количество попыток до признания контейнера неготовым
+                        type: integer
+                        default: 3
+                  startup_probe:
+                    title: пробник успешного запуска контейнера
+                    type: object
+                    properties:
+                      path:
+                        title: URI пробника
+                        type: string
+                      port:
+                        title: порт пробника
+                        type:
+                          - string # потому что может быть именем порта из спецификации контейнера
+                          - integer
+                      failure_threshold: # есть только такой параметр
+                        title: количество попыток до признания контейнера не стартовавшим
+                        type: integer
+                        default: 3
+            az_id: #todo переименовал по аналогии, но какой в этом смысл? возможно, копипаста
+              title: В каких зонах развёрнут Deployment
               type: array
               items:
                 $ref: "#/$rels/seaf.ta.services.dc_az.dc_az"
-            pv_id:
-              title: Ссылка на Persistent Volume
-              $ref: "#/$rels/seaf.ta.components.k8s_pv.k8s_pv"
+            # pv_id:
+            #   title: Ссылка на Persistent Volume
+            #   $ref: "#/$rels/seaf.ta.components.k8s_pv.k8s_pv"
+            # в deployment нет прямых ссылок на PV, только на PVC через volumes
             namespace_id:
               title: Ссылка на Namespace
               $ref: "#/$rels/seaf.ta.components.k8s_namespace.k8s_namespace"
+            volumes:
+              title: Тома деплоймента
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    title: название тома
+                    type: string
+                  claim:
+                    type: object
+                    properties:
+                      name:
+                        title: название PVC, связанного с volume
+                        type: string
+                      read_only:
+                        title: признак только для чтения
+                        type: boolean
             labels:
               title: Список labels
               type: array
           required:
             - id
+            - replicas # количество реплик должно быть указано
+            - namespace_id # не должно быть деплойментов без namespace
 
   seaf.ta.components.k8s_service:
     title: K8s Service
@@ -412,11 +510,11 @@ entities:
             name:
               title: Имя контейнера
               type: string
-            container_type:
+            container_type: #todo возможно определить только при наличии справочника разрешённых sidecar
               title: Тип контейнера
               type: string
               enum: [ Контейнер с бизнес-логикой, Контейнер-сайдкар]
-            emergency_stop:
+            emergency_stop: #todo не нашёл, как определять
               title: Обработка аварийного прерывания
               type: string
               enum: [ Не задано, Уровень настройки среды исполнения, Уровень программного кода приложения]
