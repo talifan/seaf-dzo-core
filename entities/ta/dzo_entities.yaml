@@ -242,17 +242,19 @@ entities:
                     type: integer
                   ports:
                     title: порты контейнера
-                    type: object
-                    properties:
-                      name:
-                        title: наименование порта
-                        type: string
-                      port:
-                        title: цифровое значение порта
-                        type: integer
-                      protocol:
-                        title: протокол, по которому осуществляется взаимодействие с портом
-                        type: string
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          title: наименование порта
+                          type: string
+                        port:
+                          title: цифровое значение порта
+                          type: integer
+                        protocol:
+                          title: протокол, по которому осуществляется взаимодействие с портом
+                          type: string
                   liveness_probe:
                     title: пробник живости контейнера
                     type: object
@@ -359,15 +361,32 @@ entities:
               title: Список labels
               type: array
             ports:
-              title: Список ports
+              title: Список портов сервиса
               type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    title: название порта
+                    type: string
+                  port:
+                    title: значение порта для внутренней сети k8s
+                    type: integer
+                  target_port:
+                    title: значение порта контейнера, на который будет направляться трафик
+                    type: integer
+                  node_port:
+                    title: значение порта на границе кластера, доступного извне
+                    type: integer
+                  protocol:
+                    title: протокол, по которому работает порт
+                    type: string
             selector:
               title: Список селекторов
               type: array
             namespace_id:
               title: Ссылка на Namespace
               $ref: "#/$rels/seaf.ta.components.k8s_namespace.k8s_namespace"
-
   seaf.ta.components.k8s_statefulset:
     title: K8s StatefulSet
     objects:
